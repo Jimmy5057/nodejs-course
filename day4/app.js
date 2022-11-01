@@ -5,7 +5,7 @@ const { MongoClient } = require('mongodb');
 const app = express();
 
 // mongodb connect
-const dbURL = "mongodb+srv://root:oFJDV8fkof8aULMu@cluster0.xxgdtpu.mongodb.net/?retryWrites=true&w=majority";
+const dbURL = "mongodb+srv://root:oFJDV8fkof8aULMu@cluster0.gz8s2cm.mongodb.net/?retryWrites=true&w=majority";
 const mongoClient = new MongoClient(dbURL);
 var mongodb;
 
@@ -39,11 +39,8 @@ async function initializeApp() {
         next();
     })
 
-    // 2nd middleware
-    app.use((req,res,next) => {
-        console.log('second middleware');
-        next();
-    })
+    // middleware for http request
+    app.use(express.urlencoded({extended: true}));
 
     app.get('/', (req, res) => {
         res.sendFile('./views/index.html', {root: __dirname});
@@ -53,59 +50,50 @@ async function initializeApp() {
         res.sendFile('./views/about.html', {root: __dirname});
     })
 
+    app.get('/users', (req, res) => {
+        res.sendFile('./views/user.html', {root: __dirname});
+    })
+
     // redirects
     app.get('/about-me', (req, res) => {
         res.redirect('/about');
     })
 
-    app.get('/data', async (req, res) => {
+    // Get user list
+    app.get('/api/user', async (req, res) => {
         const user = await mongodb.collection("users").find().toArray();
-        res.send(user);
-        console.log("Users List: ", user);
+        res.status(200).send(user);
     })
 
-    // List of documents
-    app.get('/userlist', async (req, res) => {
-        const query = { username: "John"};
-        const options = { sort: { name: -1}, projection: {_id: 0, username: 1, password: 1} };
-
-        const user = await mongodb.collection("users").find(query, options).toArray();
-        res.send(user);
-    })
-
-    // Specific document
-    app.get('/user', async (req, res) => {
-        const query = { username: "Test"};
-        const options = { sort: { name: -1}, projection: {_id: 0, username: 1, password: 1} };
-
-        const user = await mongodb.collection("users").findOne(query, options);
-        res.send(user);
-    })
-
-    // Add document
-    app.get('/useradd', async (req, res) => {
-        var doc = {
-            username: "Insert",
-            password: "Test12345"
-        }
+    // Add User
+    app.post('/api/user', async (req, res) => {
+        var doc = req.body;
 
         await mongodb.collection("users").insertOne(doc);
-        res.status(200).send("Successfully inserted");
+        res.status(200).send("Successfully Inserted.");
     })
 
-    // Update document
-    app.get('/userupdate', async (req, res) => {
-        const filter = {username: "Insert"};
+    // Route params
+    app.get('/api/user/:username', async (req, res) => {
+        var username = req.params.username;
+        res.status(200).send(username);
+    })
 
-        await mongodb.collection("users").updateOne(filter, { $set: {password: "Test123456"} });
+    // Update User
+    app.put('/api/user/:username', async (req, res) => {
+        const filter = {username: req.params.username};
+        var doc = req.body;
+
+        await mongodb.collection("users").updateOne(filter, { $set: doc });
         res.status(200).send("Successfully updated");
     })
 
-    // Delete document
-    app.get('/userdelete', async (req, res) => {
-        const filter = {username: "Insert"};
+    // Delete user
+    app.delete('/api/user/:username', async (req, res) => {
+        const filter = {username: req.params.username};
 
         const result = await mongodb.collection("users").deleteOne(filter);
+        
         if (result.deletedCount === 1) {
             res.status(200).send("Successfully deleted");
         } else {

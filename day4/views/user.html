@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://code.jquery.com/jquery-3.6.1.min.js"></script>
+</head>
+<body>
+    <h1>User</h1>
+    <h2>Welcome to User Page.</h2>
+
+    <div>
+        <table id="userTable">
+            <tr>
+              <th>Username</th>
+              <th>Password</th>
+            </tr>
+        </table>
+    </div>
+
+    <hr>
+
+    <!-- Form -->
+    <div>
+        <h3>Insert Function</h3>
+        <form id="addUserForm" action="/api/user">
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" required>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+            <button>Submit</button>
+        </form> 
+    </div>
+
+    <hr>
+
+    <div>
+        <h3>Update Function</h3>
+        <form id="updateUserForm" action="/api/user">
+            <label for="username">Username:</label>
+            <select name="username" id="updateUserSelect"></select>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+            <button>Update</button>
+        </form> 
+    </div>
+
+    <hr>
+
+    <div>
+        <h3>Delete Function</h3>
+        <form id="deleteUserForm" action="/api/user">
+            <label for="username">Username:</label>
+            <select name="username" id="deleteUserSelect"></select>
+            <button>Delete</button>
+        </form> 
+    </div>
+
+    <script>
+
+        $(document).ready(async function() {
+
+            // Get user list
+            var userList = await getUserList();
+            userList.forEach(user => {
+                $('#userTable').append(`<tr> <td>${user.username}</td> <td>${user.password}</td> </tr>`);
+
+                $('#updateUserSelect').append(new Option(user.username, user.username));
+                $('#deleteUserSelect').append(new Option(user.username, user.username));
+            })
+
+            // Add User
+            $("#addUserForm").submit(function(e) {
+                e.preventDefault(); // avoid to execute the actual submit of the form.
+
+                var form = $(this);
+                var formData = getFormData(form);
+                addUser(formData);
+            });
+
+            // Update User
+            $("#updateUserForm").submit(function(e) {
+                e.preventDefault(); // avoid to execute the actual submit of the form.
+
+                var form = $(this);
+                var formData = getFormData(form);
+
+                updateUser(formData);
+            });
+
+            // Delete User
+            $("#deleteUserForm").submit(function(e) {
+                e.preventDefault(); // avoid to execute the actual submit of the form.
+
+                var form = $(this);
+                var formData = getFormData(form);
+
+                deleteUser(formData);
+            });
+
+        });
+
+        function getUserList() {
+            return new Promise((resolve, reject) => {
+                $.ajax({
+                    type: "GET",
+                    url: "/api/user",
+                    success: function(data)
+                    {   
+                        resolve(data); // show response from the api.
+                    }
+                });
+            });
+        }
+
+        function addUser(formData) {
+            return new Promise((resolve, reject) => {
+                $.ajax({
+                    type: "POST",
+                    url: `/api/user`,
+                    data: formData,
+                    success: function(data)
+                    {   
+                        alert(data); // show response from the api.
+                    }
+                });
+            });
+        }
+
+        function updateUser(formData) {
+            return new Promise((resolve, reject) => {
+                $.ajax({
+                    type: "PUT",
+                    url: `/api/user/${formData.username}`,
+                    data: formData,
+                    success: function(data)
+                    {   
+                        alert(data); // show response from the api.
+                    }
+                });
+            });
+        }
+
+        function deleteUser(formData) {
+            return new Promise((resolve, reject) => {
+                $.ajax({
+                    type: "DELETE",
+                    url: `/api/user/${formData.username}`,
+                    data: formData,
+                    success: function(data)
+                    {   
+                        alert(data); // show response from the api.
+                    }
+                });
+            });
+        }
+
+        function getFormData($form){
+            var unindexed_array = $form.serializeArray();
+            var indexed_array = {};
+
+            $.map(unindexed_array, function(n, i){
+                indexed_array[n['name']] = n['value'];
+            });
+
+            return indexed_array;
+        }
+    </script>
+</body>
+</html>
